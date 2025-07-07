@@ -76,7 +76,13 @@ android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-
+    sourceSets {
+        main {
+            java.srcDirs += [
+                    "$buildDir/generated/source/codegen/java"
+            ]
+        }
+    }
     namespace "com.expensify"
     defaultConfig {
         applicationId "com.expensify"
