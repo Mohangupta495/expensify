@@ -6,6 +6,7 @@ import smsRules from './src/data/banksJson';
 type TxnMsg = SMS & {
   amount?: number;
   type?: 'credit' | 'debit';
+  extracted?:any;
 };
 
 function parseSms(config: any, sms: SMS & { sender: string }) {
@@ -28,7 +29,7 @@ function parseSms(config: any, sms: SMS & { sender: string }) {
         }
         const regex = new RegExp(patternStr, flags);
         const match = regex.exec(sms.body);
-        if (!match) continue;        
+        if (!match) continue;
         const data: Record<string, string> = {};
         const fields = pattern.data_fields || {};
         let txnType: string | undefined;
@@ -39,21 +40,33 @@ function parseSms(config: any, sms: SMS & { sender: string }) {
             data[field] = value.trim();
           }
         }
-        // Handle transaction_type_rule
         const txnRule = pattern.data_fields?.transaction_type_rule;
-        // if (txnRule && txnRule.rules && typeof txnRule.group_id === 'number') {
-        //   const groupValue = match[txnRule.group_id]?.toLowerCase().trim();
-        //   for (const tRule of txnRule.rules) {
-        //     const expected = tRule.value?.toLowerCase().trim();
-        //     if (!expected || groupValue?.includes(expected)) {
-        //       txnType = tRule.txn_type;
-        //       if (tRule.pos_override) {
-        //         data['pos'] = tRule.pos_override;
-        //       }
-        //       break;
-        //     }
-        //   }
-        // }        
+
+        if (
+          txnRule
+        ) {
+          const groupValue = match[txnRule.group_id].toLowerCase().trim();
+          for (const tRule of txnRule.rules) {
+            const expected = tRule.value?.toLowerCase().trim() || '';
+            if (!expected || groupValue.includes(expected)) {
+              txnType = tRule.txn_type;
+              data['transaction_type'] = txnType+"none"; // <-- this is important
+              if (tRule.pos_override) {
+                data['pos'] = tRule.pos_override;
+              }
+              break;
+            }
+          }
+        }
+
+        // Fallback if transaction_type_rule didn't resolve anything
+        if (!txnType) {
+          txnType =
+            pattern.data_fields?.transaction_type || pattern.transaction_type;
+          if (txnType) {
+            data['transaction_type'] = txnType;
+          }
+        }
         console.log({
           sender: sms.sender,
           body: sms.body,
@@ -89,6 +102,7 @@ const App = () => {
           ...msg,
           amount: parseFloat(result.extracted.amount),
           type: result.sms_type,
+          extracted:result.extracted,
         });
       }
     }
@@ -115,7 +129,7 @@ const App = () => {
                 { color: item.type === 'credit' ? 'green' : 'red' },
               ]}
             >
-              ₹ {item.amount?.toFixed(2)}
+              ₹ {item.amount?.toFixed(2)}{item?.extracted?.transaction_type}
             </Text>
           </View>
         )}
