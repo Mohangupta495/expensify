@@ -1,116 +1,78 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, StatusBar } from 'react-native';
 import NativeSMSReader, { SMS } from './specs/NativeSMSReader';
+import TransactionDB from './specs/NativeTransactionDBSpec';
 import smsRules from './src/data/banksJson';
+import { TxnMsg } from './src/types/types';
+import { parseSms } from './src/utils/parserLogic';
 
-type TxnMsg = SMS & {
-  amount?: number;
-  type?: 'credit' | 'debit';
-  extracted?:any;
-};
-
-function parseSms(config: any, sms: SMS & { sender: string }) {
-  const blacklistRegex =
-    /\b(password|otp|verification|activation|passcode|osp|netsecure)\b/i;
-  if (blacklistRegex.test(sms.body)) {
-    return null;
-  }
-  const possibleSenders = [sms.sender].filter(Boolean);
-  for (const rule of config.rules) {
-    const senders = rule.senders || [];
-    if (possibleSenders.some(s => senders.includes(s))) {
-      for (const pattern of rule.patterns) {
-        let patternStr = pattern.regex;
-        let flags = '';
-        // Handle embedded case-insensitive flag
-        if (patternStr.startsWith('(?i)')) {
-          flags += 'i';
-          patternStr = patternStr.replace('(?i)', '');
-        }
-        const regex = new RegExp(patternStr, flags);
-        const match = regex.exec(sms.body);
-        if (!match) continue;
-        const data: Record<string, string> = {};
-        const fields = pattern.data_fields || {};
-        let txnType: string | undefined;
-        for (const [field, fieldConfig] of Object.entries(fields)) {
-          const groupId = fieldConfig.group_id;
-          const value = match[groupId];
-          if (groupId >= 0 && value) {
-            data[field] = value.trim();
-          }
-        }
-        const txnRule = pattern.data_fields?.transaction_type_rule;
-
-        if (
-          txnRule
-        ) {
-          const groupValue = match[txnRule.group_id].toLowerCase().trim();
-          for (const tRule of txnRule.rules) {
-            const expected = tRule.value?.toLowerCase().trim() || '';
-            if (!expected || groupValue.includes(expected)) {
-              txnType = tRule.txn_type;
-              data['transaction_type'] = txnType+"none"; // <-- this is important
-              if (tRule.pos_override) {
-                data['pos'] = tRule.pos_override;
-              }
-              break;
-            }
-          }
-        }
-
-        // Fallback if transaction_type_rule didn't resolve anything
-        if (!txnType) {
-          txnType =
-            pattern.data_fields?.transaction_type || pattern.transaction_type;
-          if (txnType) {
-            data['transaction_type'] = txnType;
-          }
-        }
-        console.log({
-          sender: sms.sender,
-          body: sms.body,
-          sms_type: pattern.sms_type,
-          extracted: data,
-        });
-        return {
-          sender: sms.sender,
-          body: sms.body,
-          sms_type: pattern.sms_type,
-          extracted: data,
-        };
-      }
-    }
-  }
-
-  return null;
-}
 const App = () => {
-  const [messages, setMessages] = useState<TxnMsg[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+
+  const formatTxnToDB = (msg: TxnMsg) => ({
+    address: msg.address,
+    body: msg.body,
+    amount: msg.extracted?.amount || '',
+    date: msg.extracted?.date || '',
+    type: msg.type || '',
+    pan: msg.extracted?.pan || '',
+    networkReferenceId: msg.extracted?.network_reference_id || '',
+    accountBalance: msg.extracted?.account_balance || '',
+  });
 
   const fetchMessages = async () => {
-    const allSMS: SMS[] = await NativeSMSReader.getAllSMS();
-    const parsed: TxnMsg[] = [];    
-    for (const msg of allSMS) {
-      const sender = msg.address?.split('-')[1];
-      const result = parseSms(smsRules, { ...msg, sender });
-
-      if (result && result.extracted?.amount) {
-        parsed.push({
-          ...msg,
-          amount: parseFloat(result.extracted.amount),
-          type: result.sms_type,
-          extracted:result.extracted,
-        });
+    try {
+      const dbTxns = await TransactionDB.getAllTransactions();
+      if (dbTxns.length > 0) {
+        setMessages(dbTxns.map(txn => ({
+          ...txn,
+          body: txn.body,
+          address: txn.address,
+          amount: parseFloat(txn.amount),
+          type: txn.type,
+          extracted: {
+            amount: txn.amount,
+            date: txn.date,
+            pan: txn.pan,
+            network_reference_id: txn.network_reference_id,
+            account_balance: txn.account_balance,
+            transaction_type: txn.type,
+          }
+        })));
+        return;
       }
-    }
 
-    setMessages(parsed);
+      const allSMS: SMS[] = await NativeSMSReader.getAllSMS();
+      const parsed: TxnMsg[] = [];
+
+      for (const msg of allSMS) {
+        const sender = msg.address?.split('-')[1];
+        const result = parseSms(smsRules, { ...msg, sender });
+
+        if (result && result.extracted?.amount) {
+          parsed.push({
+            ...msg,
+            amount: parseFloat(result.extracted.amount),
+            type: result.sms_type,
+            extracted: result.extracted,
+          });
+        }
+      }
+
+      if (parsed.length > 0) {
+        const formatted = parsed.map(formatTxnToDB);
+        await TransactionDB.insertTransactionsList(formatted);
+      }
+
+      setMessages(parsed);
+    } catch (e) {
+      console.error('Error fetching messages:', e);
+    }
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
+  // useEffect(() => {
+  //   fetchMessages();
+  // }, []);
 
   return (
     <View style={styles.container}>
@@ -127,7 +89,7 @@ const App = () => {
                 { color: item.type === 'credit' ? 'green' : 'red' },
               ]}
             >
-              ₹ {item.amount?.toFixed(2)}{item?.extracted?.transaction_type}
+              ₹ {item.amount?.toFixed(2)} {item.extracted?.transaction_type}
             </Text>
           </View>
         )}
@@ -158,4 +120,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-export default App
+
+export default App;

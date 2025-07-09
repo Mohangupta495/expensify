@@ -1,6 +1,7 @@
 package com.expensify
 
 import android.os.Bundle
+import com.expensify.smsreader.SMSProcessor
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -20,12 +21,13 @@ class MainActivity : ReactActivity() {
    */
   override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
-      NotificationHelper.showTransactionNotePrompt(
-          this,
-          "400",
-          isCredit =true,
-          "axis"
-      )
+//      NotificationHelper.showTransactionNotePrompt(
+//          this,
+//          "400",
+//          isCredit =true,
+//          "axis"
+//      )
+      SMSProcessor.processAndStoreSMS(this)
   }
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =

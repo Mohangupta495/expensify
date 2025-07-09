@@ -9,11 +9,37 @@ export interface Spec extends TurboModule {
     body: string,
     amount: string,
     date: string,
-    type: string
+    type: string,
+    pan: string,
+    networkReferenceId: string,
+    accountBalance: string
+  ): Promise<string>;
+
+  insertTransactionsList(
+    transactions: {
+      address: string;
+      body: string;
+      amount: string;
+      date: string;
+      type: string;
+      pan: string;
+      networkReferenceId: string;
+      accountBalance: string;
+    }[]
   ): Promise<string>;
 
   getAllTransactions(): Promise<
-    { id: string; address: string; body: string; amount: string; date: string; type: string }[]
+    {
+      id: string;
+      address: string;
+      body: string;
+      amount: string;
+      date: string;
+      type: string;
+      pan?: string;
+      network_reference_id?: string;
+      account_balance?: string;
+    }[]
   >;
 }
 
