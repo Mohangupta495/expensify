@@ -23,6 +23,7 @@ const App = () => {
   const fetchMessages = async () => {
     try {
       const dbTxns = await TransactionDB.getAllTransactions();
+      console.log(dbTxns)
       if (dbTxns.length > 0) {
         setMessages(dbTxns.map(txn => ({
           ...txn,
@@ -42,37 +43,38 @@ const App = () => {
         return;
       }
 
-      const allSMS: SMS[] = await NativeSMSReader.getAllSMS();
-      const parsed: TxnMsg[] = [];
+      return;
+      // const allSMS: SMS[] = await NativeSMSReader.getAllSMS();
+      // const parsed: TxnMsg[] = [];
 
-      for (const msg of allSMS) {
-        const sender = msg.address?.split('-')[1];
-        const result = parseSms(smsRules, { ...msg, sender });
+      // for (const msg of allSMS) {
+      //   const sender = msg.address?.split('-')[1];
+      //   const result = parseSms(smsRules, { ...msg, sender });
 
-        if (result && result.extracted?.amount) {
-          parsed.push({
-            ...msg,
-            amount: parseFloat(result.extracted.amount),
-            type: result.sms_type,
-            extracted: result.extracted,
-          });
-        }
-      }
+      //   if (result && result.extracted?.amount) {
+      //     parsed.push({
+      //       ...msg,
+      //       amount: parseFloat(result.extracted.amount),
+      //       type: result.sms_type,
+      //       extracted: result.extracted,
+      //     });
+      //   }
+      // }
 
-      if (parsed.length > 0) {
-        const formatted = parsed.map(formatTxnToDB);
-        await TransactionDB.insertTransactionsList(formatted);
-      }
+      // if (parsed.length > 0) {
+      //   const formatted = parsed.map(formatTxnToDB);
+      //   await TransactionDB.insertTransactionsList(formatted);
+      // }
 
-      setMessages(parsed);
+      // setMessages(parsed);
     } catch (e) {
       console.error('Error fetching messages:', e);
     }
   };
 
-  // useEffect(() => {
-  //   fetchMessages();
-  // }, []);
+  useEffect(() => {
+    fetchMessages();
+  }, []);
 
   return (
     <View style={styles.container}>

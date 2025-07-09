@@ -27,7 +27,7 @@ class MainActivity : ReactActivity() {
 //          isCredit =true,
 //          "axis"
 //      )
-      SMSProcessor.processAndStoreSMS(this)
+//      SMSProcessor.processAndStoreSMS(this)
   }
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =
