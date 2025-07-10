@@ -10,12 +10,18 @@ object TransactionDBUtils {
 
     fun insertTransaction(
         context: Context,
-        address: String,
+        sender: String,
         body: String,
+        smsType: String,
+        patternUID: String,
+        sortUID: String,
+        accountType: String,
+        transactionType: String,
         amount: String,
-        date: String,
-        type: String,
         pan: String,
+        pos: String,
+        note: String,
+        date: String,
         networkRefId: String,
         accountBalance: String
     ) {
@@ -23,12 +29,19 @@ object TransactionDBUtils {
         val db = dbHelper.writableDatabase
 
         val values = ContentValues().apply {
-            put("address", address)
+            put("sender", sender)
             put("body", body)
+            put("sms_type", smsType)
+            put("pattern_UID", patternUID)
+            put("sort_UID", sortUID)
+            put("account_type", accountType)
+
+            put("transaction_type", transactionType)
             put("amount", amount)
-            put("date", date)
-            put("type", type)
             put("pan", pan)
+            put("pos", pos)
+            put("note", note)
+            put("date", date)
             put("network_reference_id", networkRefId)
             put("account_balance", accountBalance)
         }
@@ -45,20 +58,27 @@ object TransactionDBUtils {
             try {
                 for (txn in transactions) {
                     val values = ContentValues().apply {
-                        put("address", txn["address"] ?: "")
+                        put("sender", txn["sender"] ?: "")
                         put("body", txn["body"] ?: "")
+                        put("sms_type", txn["sms_type"] ?: "")
+                        put("pattern_UID", txn["pattern_UID"] ?: "")
+                        put("sort_UID", txn["sort_UID"] ?: "")
+                        put("account_type", txn["account_type"] ?: "")
+
+                        put("transaction_type", txn["transaction_type"] ?: "")
                         put("amount", txn["amount"] ?: "")
-                        put("date", txn["date"] ?: "")
-                        put("type", txn["type"] ?: "")
                         put("pan", txn["pan"] ?: "")
+                        put("pos", txn["pos"] ?: "")
+                        put("note", txn["note"] ?: "")
+                        put("date", txn["date"] ?: "")
                         put("network_reference_id", txn["network_reference_id"] ?: "")
                         put("account_balance", txn["account_balance"] ?: "")
                     }
                     insert("transactions", null, values)
                 }
             } finally {
+                db.close()
             }
-            db.close()
         }
     }
 
@@ -73,12 +93,19 @@ object TransactionDBUtils {
             while (it.moveToNext()) {
                 val map = Arguments.createMap()
                 map.putString("id", it.getString(it.getColumnIndexOrThrow("id")))
-                map.putString("address", it.getString(it.getColumnIndexOrThrow("address")))
+                map.putString("sender", it.getString(it.getColumnIndexOrThrow("sender")))
                 map.putString("body", it.getString(it.getColumnIndexOrThrow("body")))
+                map.putString("sms_type", it.getString(it.getColumnIndexOrThrow("sms_type")))
+                map.putString("pattern_UID", it.getString(it.getColumnIndexOrThrow("pattern_UID")))
+                map.putString("sort_UID", it.getString(it.getColumnIndexOrThrow("sort_UID")))
+                map.putString("account_type", it.getString(it.getColumnIndexOrThrow("account_type")))
+
+                map.putString("transaction_type", it.getString(it.getColumnIndexOrThrow("transaction_type")))
                 map.putString("amount", it.getString(it.getColumnIndexOrThrow("amount")))
-                map.putString("date", it.getString(it.getColumnIndexOrThrow("date")))
-                map.putString("type", it.getString(it.getColumnIndexOrThrow("type")))
                 map.putString("pan", it.getString(it.getColumnIndexOrThrow("pan")))
+                map.putString("pos", it.getString(it.getColumnIndexOrThrow("pos")))
+                map.putString("note", it.getString(it.getColumnIndexOrThrow("note")))
+                map.putString("date", it.getString(it.getColumnIndexOrThrow("date")))
                 map.putString("network_reference_id", it.getString(it.getColumnIndexOrThrow("network_reference_id")))
                 map.putString("account_balance", it.getString(it.getColumnIndexOrThrow("account_balance")))
                 array.pushMap(map)
@@ -87,5 +114,16 @@ object TransactionDBUtils {
 
         db.close()
         return array
+    }
+    fun clearAllTransactions(context: Context) {
+        val dbHelper = TransactionDBHelper(context)
+        val db = dbHelper.writableDatabase
+        db.delete("transactions", null, null)
+        db.close()
+    }
+
+    fun deleteDatabaseFile(context: Context): Boolean {
+        val dbName = "transactions.db"
+        return context.deleteDatabase(dbName)
     }
 }

@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 
 object SMSProcessor {
 
-    fun processAndStoreSMS(context: Context) {
+    fun processAndStoreSMS(context: Context, onProgress: ((Int) -> Unit)? = null) {
         val configJson = loadConfigJson(context)
         val config = JSONObject(configJson)
         val uri = Uri.parse("content://sms/inbox")
@@ -20,6 +20,9 @@ object SMSProcessor {
         val cursor = contentResolver.query(uri, null, null, null, null)
 
         cursor?.use {
+            val totalCount = it.count
+            var processedCount = 0
+
             val addressIdx = it.getColumnIndex(Telephony.Sms.ADDRESS)
             val bodyIdx = it.getColumnIndex(Telephony.Sms.BODY)
             val dateIdx = it.getColumnIndex(Telephony.Sms.DATE)
@@ -39,25 +42,38 @@ object SMSProcessor {
                 }
 
                 val parsed = parseSmsNative(config, sms)
-
                 Log.i("SMSParsed", "Parsed SMS from: $sender -> $parsed")
 
                 parsed?.let { parsedData ->
+                    val extracted = parsedData.optJSONObject("extracted") ?: return@let
                     TransactionDBUtils.insertTransaction(
-                        context,
-                        address = sender,
+                        context = context,
+                        sender = sender,
                         body = body,
-                        amount = parsedData.optString("amount"),
-                        date = date,
-                        type = parsedData.optString("transaction_type"),
-                        pan = parsedData.optString("pan"),
-                        networkRefId = parsedData.optString("network_reference_id"),
-                        accountBalance = parsedData.optString("account_balance")
+                        smsType = parsedData.optString("sms_type"),
+                        patternUID = parsedData.optString("pattern_UID"),
+                        sortUID = parsedData.optString("sort_UID"),
+                        accountType = parsedData.optString("account_type"),
+
+                        transactionType = extracted.optString("transaction_type"),
+                        amount = extracted.optString("amount"),
+                        pan = extracted.optString("pan"),
+                        pos = extracted.optString("pos"),
+                        note = extracted.optString("note"),
+                        date = extracted.optString("date", date),
+                        networkRefId = extracted.optString("network_reference_id"),
+                        accountBalance = extracted.optString("account_balance")
                     )
                 }
+
+                // Update progress
+                processedCount++
+                val progress = (processedCount * 100) / totalCount
+                onProgress?.invoke(progress)
             }
         }
     }
+
 
     private fun loadConfigJson(context: Context): String {
         return context.assets.open("bank_config.json")
