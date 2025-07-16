@@ -98,6 +98,14 @@ class TransactionDBModule(reactContext: ReactApplicationContext) :
             promise.reject("CLEAR_ERROR", "Failed to clear transactions", e)
         }
     }
+    override fun executeRawQuery(query: String, promise: Promise) {
+        try {
+            val result = TransactionDBUtils.executeRawQuery(reactApplicationContext, query)
+            promise.resolve(result)
+        } catch (e: Exception) {
+            promise.reject("QUERY_ERROR", "Failed to execute query", e)
+        }
+    }
 
     override fun deleteDatabase(promise: Promise) {
         try {

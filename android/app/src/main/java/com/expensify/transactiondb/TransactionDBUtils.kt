@@ -126,4 +126,39 @@ object TransactionDBUtils {
         val dbName = "transactions.db"
         return context.deleteDatabase(dbName)
     }
+    fun executeRawQuery(context: Context, query: String): WritableArray {
+        val dbHelper = TransactionDBHelper(context)
+        val db = dbHelper.writableDatabase
+        val resultArray = Arguments.createArray()
+
+        try {
+            if (query.trim().lowercase().startsWith("select")) {
+                val cursor = db.rawQuery(query, null)
+                cursor.use {
+                    while (it.moveToNext()) {
+                        val map = Arguments.createMap()
+                        for (i in 0 until it.columnCount) {
+                            val columnName = it.getColumnName(i)
+                            val value = it.getString(i)
+                            map.putString(columnName, value)
+                        }
+                        resultArray.pushMap(map)
+                    }
+                }
+            } else {
+                db.execSQL(query)
+                val map = Arguments.createMap()
+                map.putString("status", "Query executed successfully")
+                resultArray.pushMap(map)
+            }
+        } catch (e: Exception) {
+            val errorMap = Arguments.createMap()
+            errorMap.putString("error", e.message ?: "Unknown error")
+            resultArray.pushMap(errorMap)
+        } finally {
+            db.close()
+        }
+
+        return resultArray
+    }
 }

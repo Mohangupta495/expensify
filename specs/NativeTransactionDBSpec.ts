@@ -45,6 +45,7 @@ export interface Spec extends TurboModule {
   getAllTransactions(): Promise<TransactionRecord[]>;
    clearAllTransactions(): Promise<string>;
   deleteDatabase(): Promise<string>;
+  executeRawQuery(query: string): Promise<any[]>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('TransactionDBModule');
