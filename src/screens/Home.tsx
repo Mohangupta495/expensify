@@ -11,59 +11,8 @@ import {
 import { Search, Plus, UserPen } from 'lucide-react-native';
 import { PieChart } from 'react-native-gifted-charts';
 import { Colors } from '../utils/Colors';
-
-const transactions = [
-  {
-    id: '1',
-    label: 'Upi Funds Transfer',
-    amount: 10,
-    date: '21 Jul',
-    iconColor: '#FF3B3B',
-    icon: '!',
-  },
-  {
-    id: '2',
-    label: 'GPAY',
-    amount: 49,
-    date: '20 Jul',
-    tag: '#Online',
-    iconColor: '#00E676',
-    icon: 'G',
-  },
-  {
-    id: '3',
-    label: '7668837046@naviaxis',
-    amount: 15,
-    date: '20 Jul',
-    iconColor: '#9C27B0',
-    icon: '₹',
-  },
-  {
-    id: '1',
-    label: 'Upi Funds Transfer',
-    amount: 10,
-    date: '21 Jul',
-    iconColor: '#FF3B3B',
-    icon: '!',
-  },
-  {
-    id: '2',
-    label: 'GPAY',
-    amount: 49,
-    date: '20 Jul',
-    tag: '#Online',
-    iconColor: '#00E676',
-    icon: 'G',
-  },
-  {
-    id: '3',
-    label: '7668837046@naviaxis',
-    amount: 15,
-    date: '20 Jul',
-    iconColor: '#9C27B0',
-    icon: '₹',
-  },
-];
+import TransactionDB from '../../specs/NativeTransactionDBSpec';
+import NativeSMSReader from '../../specs/NativeSMSReader';
 
 const HomeScreen = () => {
   const percentage = 119;
@@ -73,19 +22,76 @@ const HomeScreen = () => {
   const safeToSpend = 0;
 
   const [animateChart, setAnimateChart] = useState(false);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+
+  const formatTransactions = (rawTxns: any[]) => {
+    return rawTxns.map((txn) => {
+      const parsedAmount = parseFloat(txn.amount);
+      const isDebit = txn.body?.toLowerCase().includes('debited');
+
+      return {
+        id: txn.id.toString(),
+        label: txn.transaction_type?.toUpperCase() || 'Transaction',
+        amount: parsedAmount,
+        date: formatDisplayDate(txn.date),
+        iconColor: isDebit ? '#FF3B3B' : '#00C897',
+        icon: txn.transaction_type?.[0]?.toUpperCase() || '₹',
+      };
+    });
+  };
+
+  const formatDisplayDate = (dateStr: string) => {
+    try {
+      const [d, m, yTime] = dateStr.split('-');
+      const [y, time] = yTime.split(' ');
+      const date = new Date(`20${y}-${m}-${d}T${time}`);
+      const options = { day: '2-digit', month: 'short' } as const;
+      return date.toLocaleDateString('en-GB', options);
+    } catch (err) {
+      return dateStr;
+    }
+  };
+
+  const loadTransactionsFromDB = async () => {
+    try {
+      const txns = await TransactionDB.getAllTransactions();
+      setMessages(txns);
+    } catch (err) {
+      console.error('Failed to load transactions:', err);
+    }
+  };
+
+  const handleFetchSMS = async () => {
+    setLoading(true);
+    setProgress(null);
+
+    try {
+      // const result = await NativeSMSReader.getAllSMS();
+      // if (result === true) {
+        await loadTransactionsFromDB();
+      // }
+    } catch (err) {
+      console.error('getAllSMS failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    handleFetchSMS();
     const timeout = setTimeout(() => setAnimateChart(true), 100);
     return () => clearTimeout(timeout);
   }, []);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={"dark-content"}/>
+      <StatusBar barStyle={"dark-content"} />
       <View style={styles.headerWrapper}>
         <View style={styles.header}>
-          <View style={styles.avatar} >
-            <UserPen  size={18} color={Colors.gray}/>
+          <View style={styles.avatar}>
+            <UserPen size={18} color={Colors.gray} />
           </View>
           <Text style={styles.greeting}>
             Hi <Text style={styles.name}>Mohan</Text>
@@ -154,13 +160,13 @@ const HomeScreen = () => {
         <View style={styles.transactionsContainer}>
           <View style={styles.transactionsHeader}>
             <Text style={styles.transactionsTitle}>Recent transactions</Text>
-            <TouchableOpacity style={styles.addButton}>              
+            <TouchableOpacity style={styles.addButton}>
               <Text style={styles.addText}>View All</Text>
             </TouchableOpacity>
           </View>
 
           <FlatList
-            data={transactions}
+            data={formatTransactions(messages)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.transactionItem}>
@@ -171,7 +177,6 @@ const HomeScreen = () => {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.transactionLabel}>{item.label}</Text>
-                  {item.tag && <Text style={styles.transactionTag}>{item.tag}</Text>}
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.transactionAmount}>₹{item.amount}</Text>
@@ -187,10 +192,7 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F1F1FA',
-  },
+  container: { flex: 1, backgroundColor: '#F1F1FA' },
   headerWrapper: {
     backgroundColor: '#fff',
     paddingTop: 50,
@@ -209,8 +211,8 @@ const styles = StyleSheet.create({
     height: 35,
     backgroundColor: Colors.secondary,
     borderRadius: 100,
-    alignItems:"center",
-    justifyContent:"center"
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   greeting: {
     fontSize: 18,
@@ -218,13 +220,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
   },
-  name: {
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  name: { fontWeight: 'bold' },
+  content: { flex: 1, backgroundColor: '#fff' },
   subText: {
     textAlign: 'center',
     marginTop: 10,
@@ -305,16 +302,6 @@ const styles = StyleSheet.create({
   transactionLabel: {
     color: '#000',
     fontSize: 14,
-  },
-  transactionTag: {
-    backgroundColor: '#9DBFFF',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginTop: 2,
-    fontSize: 10,
-    color: '#000',
   },
   transactionAmount: {
     color: '#000',

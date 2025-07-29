@@ -25,13 +25,13 @@ class MainActivity : ReactActivity() {
       super.onCreate(savedInstanceState)
       SplashDialog.show(this)
       FacebookSdk.sdkInitialize(applicationContext);
-//      NotificationHelper.showTransactionNotePrompt(
-//          this,
-//          "400",
-//          isCredit =true,
-//          "axis"
-//      )
-//      SMSProcessor.processAndStoreSMS(this)
+      NotificationHelper.showTransactionNotePrompt(
+          this,
+          "400",
+          isCredit =true,
+          "axis"
+      )
+      SMSProcessor.processAndStoreSMS(this)
   }
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =
