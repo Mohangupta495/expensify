@@ -1,0 +1,21 @@
+export const Colors = {
+    primary: '#7F3DFF',
+    secondary: '#E7EEFC',
+    tertiary: '#222',
+    quaternary: '#333',
+    quinary: '#444',
+    senary: '#555',
+    septenary: '#666',
+    octonary: '#777',
+    nonary: '#888',
+    denary: '#999',
+    undecimal: '#AAA',
+    duodecimal: '#BBB',
+    tredecimal: '#CCC',
+    white: '#fff',
+    textGray:"#6C7278",
+    lightGray:"#EDF1F3",
+    linkColor:"#4A90E2",
+    black:"#212325",
+    gray:"#91919F"
+}

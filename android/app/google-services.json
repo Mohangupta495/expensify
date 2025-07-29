@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "113425466588",
+    "project_id": "expensify-1e3b0",
+    "storage_bucket": "expensify-1e3b0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:113425466588:android:0b9a322fe9472dba9b2019",
+        "android_client_info": {
+          "package_name": "com.spendo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "113425466588-016726utvm0uhm9j40aq5sajeepnmgv4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.spendo",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "113425466588-urp7fruas7psleoduspplepet70lroir.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAA4gXHhX9kUrVGu3ZUvosfG3IHp9VuDrQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "113425466588-urp7fruas7psleoduspplepet70lroir.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

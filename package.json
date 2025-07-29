@@ -11,18 +11,35 @@
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "^8.4.2",
+    "@react-native-firebase/app": "^22.4.0",
+    "@react-native-firebase/auth": "^22.4.0",
+    "@react-native-google-signin/google-signin": "^15.0.0",
     "@react-native-picker/picker": "^2.11.1",
     "@react-native/new-app-screen": "0.80.1",
+    "@react-navigation/elements": "^2.6.1",
+    "@react-navigation/native-stack": "6.11.0",
+    "lucide-react-native": "^0.526.0",
     "react": "19.1.0",
-    "react-native": "0.80.1"
+    "react-native": "0.80.1",
+    "react-native-animated-dots-carousel": "^2.0.1",
+    "react-native-auto-route": "^0.3.3",
+    "react-native-fbsdk-next": "^13.4.1",
+    "react-native-gesture-handler": "^2.27.2",
+    "react-native-gifted-charts": "^1.4.63",
+    "react-native-linear-gradient": "^2.8.3",
+    "react-native-reanimated": "^4.0.1",
+    "react-native-reanimated-carousel": "^4.0.2",
+    "react-native-safe-area-context": "^5.5.2",
+    "react-native-screens": "^4.13.1",
+    "react-native-svg": "^15.12.0",
+    "react-native-worklets": "^0.4.0"
   },
-  
   "codegenConfig": {
     "name": "NativeShowcase",
     "type": "modules",
     "jsSrcsDir": "specs",
     "android": {
-      "javaPackageName": "com.expensify.modules"
+      "javaPackageName": "com.spendo.modules"
     }
   },
   "devDependencies": {
